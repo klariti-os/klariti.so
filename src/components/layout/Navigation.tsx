@@ -33,7 +33,7 @@ const Navigation: React.FC = () => {
         <NavItem href="/" title="Home" />
         <NavItem href="/join" title="Join" />
         <NavItem href="/manifesto" title="Manifesto" />
-        <NavItem href="/resources" title="resources" />
+    
       </nav>
       
     </div>
