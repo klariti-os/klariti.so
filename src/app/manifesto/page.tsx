@@ -1,6 +1,7 @@
 import type { Metadata, NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
+import localFont from 'next/font/local';
 
 import image1 from "@/images/photos/image-1.jpg";
 import image2 from "@/images/photos/image-2.jpg";
@@ -11,6 +12,32 @@ import clsx from "clsx";
 import { Card } from "@/components/Card";
 import PillButton from "@/components/PillButton";
 import Kline from "@/components/kline";
+
+// Using PP Editorial New Regular for manifesto content
+const ppEditorialRegular = localFont({
+  src: [
+    {
+      path: '../../../public/fonts/editorial-new/PPEditorialNew-Regular.otf',
+      weight: '400',
+      style: 'normal',
+    }
+  ],
+  variable: '--font-pp-editorial-regular',
+  display: 'swap',
+});
+
+// Using PP Editorial New Italic for emphasis
+const ppEditorialItalic = localFont({
+  src: [
+    {
+      path: '../../../public/fonts/editorial-new/PPEditorialNew-Italic.otf',
+      weight: '400',
+      style: 'italic',
+    }
+  ],
+  variable: '--font-pp-editorial-italic',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: "Klariti OS",
@@ -32,7 +59,7 @@ const Manifesto: NextPage = () => {
     },
   ]);
   return (
-    <>
+    <div className={`${ppEditorialRegular.variable} ${ppEditorialItalic.variable}`}>
       <Head>
         <script
           type="application/ld+json"
@@ -43,13 +70,13 @@ const Manifesto: NextPage = () => {
       </Head>
       <main className="pb-32">
         <div className="px-6">
-          <section className="w-full max-w-xl mx-auto mt-44">
+          <section className="w-full  max-w-xl mx-auto mt-44">
 
-            <h1 className=" italic font-mono font-bold text-slate-300 text-2xl">
+            <h1 className="font-pp-editorial-italic text-slate-300 text-2xl font-bold">
               Manifesto
             </h1>
             <br />
-            <p className=" p-4 bg-slate-100 text-gray-900 text-lg  bg-opacity-[30%] backdrop-blur-sm rounded-xl font-mono  flex flex-col gap-4">
+            <p className="p-4 bg-slate-100 text-gray-900 text-2xl bg-opacity-[30%] backdrop-blur-sm rounded-xl font-pp-editorial-regular flex flex-col gap-4">
               <span>
                 Technology was supposed to be a tool to enhance our lives, a
                 tool to help us communicate with our loved ones, a tool to help
@@ -97,7 +124,7 @@ const Manifesto: NextPage = () => {
           </section>
         </div>
       </main>
-    </>
+    </div>
   );
 };
 

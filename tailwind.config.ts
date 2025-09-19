@@ -19,6 +19,7 @@ const config: Config = {
         mono: ["JetBrains Mono", "monospace"],
         "pp-editorial-ultralight": ["var(--font-pp-editorial-ultralight)", "serif"],
         "pp-editorial-regular": ["var(--font-pp-editorial-regular)", "serif"],
+        "pp-editorial-italic": ["var(--font-pp-editorial-italic)", "serif"],
         "pp-editorial-ultralight-italic": ["var(--font-pp-editorial-ultralight-italic)", "serif"],
       },
     },
