@@ -40,7 +40,7 @@ const BaseLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </a>
 
         <a
-          href="https://github.com/ignasxv"
+          href="https://github.com/klariti-os"
           target="_blank"
           rel="noreferrer"
           className="w-9 h-9 flex items-center justify-center bg-gray-500 hover:bg-slate-900  rounded-lg"

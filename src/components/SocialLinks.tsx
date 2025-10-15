@@ -1,6 +1,6 @@
 <div className="mt-12 text-[#676767] flex items-center gap-5">
   <a
-    href="https://github.com/ignasxv"
+    href="https://github.com/klariti-os"
     target="_blank"
     rel="noreferrer"
     className="w-9 h-9 flex items-center justify-center hover:bg-[#1A1A1A] rounded-lg"
