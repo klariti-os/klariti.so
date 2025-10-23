@@ -2,6 +2,7 @@
 
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NavItem: React.FC<{ href: string; title: string }> = ({
   href,
@@ -25,12 +26,35 @@ const NavItem: React.FC<{ href: string; title: string }> = ({
 };
 
 const Navigation: React.FC = () => {
+  const { user, logout, isLoading } = useAuth();
+
   return (
     <div className="h-fit  fixed inset-x-2 text-gray-900 z-50 flex justify-center bottom-4 md:top-4 ">
-      <nav className="h-fit transition-[box-shadow_background-color_border-color] duration-300 motion-reduce:transition-none shadow-[0_0_12px_rgba(90,94,82,0.5)] text-sm bg-zinc-400 bg-opacity-[40%] w-[100%] md:w-[80%] backdrop-blur-[10px] border uppercase border-slate-700/20 p-1 font-mono  rounded-lg flex justify-start">
+      <nav className="h-fit transition-[box-shadow_background-color_border-color] duration-300 motion-reduce:transition-none shadow-[0_0_12px_rgba(90,94,82,0.5)] text-sm bg-zinc-400 bg-opacity-[40%] w-[100%] md:w-[80%] backdrop-blur-[10px] border uppercase border-slate-700/20 p-1 font-mono  rounded-lg flex justify-start items-center">
         <NavItem href="/" title="Home" />
         <NavItem href="/manifesto" title="Manifesto" />
         <NavItem href="/join" title="Join" />
+        
+        {!isLoading && user && (
+          <>
+            <NavItem href="/playground" title="Dashboard" />
+            <button
+              onClick={logout}
+              className="transition-[box-shadow_background-color_border-color] duration-300 motion-reduce:transition-none font-bold ml-auto mr-2 px-4 py-2.5 rounded-lg hover:bg-red-300/30"
+            >
+              Logout
+            </button>
+          </>
+        )}
+        
+        {!isLoading && !user && (
+          <NextLink
+            href="/auth"
+            className="transition-[box-shadow_background-color_border-color] duration-300 motion-reduce:transition-none font-bold ml-auto mr-2 px-4 py-2.5 rounded-lg hover:bg-gray-300/30"
+          >
+            Login
+          </NextLink>
+        )}
       </nav>
     </div>
   );

@@ -1,14 +1,13 @@
+"use client";
+
 import PillButton from "@/components/PillButton";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { Metadata, NextPage } from "next";
 import Head from "next/head";
 
-export const metadata: Metadata = {
-  title: "ios — playgropund",
-};
-
 const ToolsPage: NextPage = () => {
   return (
-    <>
+    <ProtectedRoute>
       <div className="px-6">
         <main className="w-full max-w-2xl mx-auto mt-10 mb-20">
           <h1 className="text-xl font-medium">ios playground</h1>
@@ -35,7 +34,7 @@ const ToolsPage: NextPage = () => {
           </div>
         </main>
       </div>
-    </>
+    </ProtectedRoute>
   );
 };
 
