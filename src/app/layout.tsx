@@ -2,6 +2,7 @@ import { type Metadata } from "next"
 
 import "@/styles/globals.css"
 import BaseLayout from "@/components/layout/BaseLayout"
+import { AuthProvider } from "@/contexts/AuthContext"
 
 export default function RootLayout({
   children,
@@ -11,7 +12,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <body className="font-mono antialiased bg-[#d9d9d9] selection:bg-white/10">
-        <BaseLayout>{children}</BaseLayout>
+        <AuthProvider>
+          <BaseLayout>{children}</BaseLayout>
+        </AuthProvider>
       </body>
     </html>
   )
