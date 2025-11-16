@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   getAllChallenges,
   getMyChallenges,
@@ -10,6 +10,7 @@ import {
   Challenge,
 } from "@/services/challenges";
 import ChallengeCard from "./ChallengeCard";
+import { useChallengeWebSocket } from "@/hooks/useChallengeWebSocket";
 
 type TabType = "all" | "my-challenges" | "created";
 
@@ -27,6 +28,32 @@ export default function ChallengeList({
   const [error, setError] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<TabType>(activeTab);
   const [joinedChallengeIds, setJoinedChallengeIds] = useState<Set<number>>(new Set());
+
+  // Handle real-time challenge updates via WebSocket
+  const handleChallengeUpdate = useCallback((challengeId: number, isActive: boolean, updatedChallenge: Challenge) => {
+    console.log("WebSocket update received:", challengeId, isActive);
+    
+    setChallenges(prevChallenges =>
+      prevChallenges.map(challenge => {
+        if (challenge.id === challengeId) {
+          // Merge the updated challenge data
+          return {
+            ...challenge,
+            ...updatedChallenge,
+            toggle_details: updatedChallenge.toggle_details || challenge.toggle_details,
+          };
+        }
+        return challenge;
+      })
+    );
+  }, []);
+
+  // Connect to WebSocket for real-time updates
+  const { isConnected } = useChallengeWebSocket({
+    onChallengeToggled: handleChallengeUpdate,
+    onConnect: () => console.log("Connected to challenge updates"),
+    onDisconnect: () => console.log("Disconnected from challenge updates"),
+  });
 
   const loadChallenges = async () => {
     setIsLoading(true);
@@ -115,6 +142,17 @@ export default function ChallengeList({
 
   return (
     <div className="space-y-6">
+      {/* Connection Status Indicator */}
+      {isConnected && (
+        <div className="flex items-center gap-2 text-xs text-green-600 font-mono">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          </span>
+          Live updates enabled
+        </div>
+      )}
+
       {/* Tabs - Glassmorphism Style */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex gap-2 flex-wrap">
