@@ -10,6 +10,7 @@ import {
   Challenge,
 } from "@/services/challenges";
 import ChallengeCard from "./ChallengeCard";
+import ChallengeDetailModal from "./ChallengeDetailModal";
 import { useChallengeWebSocket } from "@/hooks/useChallengeWebSocket";
 
 type TabType = "all" | "my-challenges" | "created";
@@ -28,15 +29,39 @@ export default function ChallengeList({
   const [error, setError] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<TabType>(activeTab);
   const [joinedChallengeIds, setJoinedChallengeIds] = useState<Set<number>>(new Set());
+  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Cache state to store challenges for each tab
+  const [challengesCache, setChallengesCache] = useState<Record<TabType, Challenge[] | null>>({
+    "all": null,
+    "my-challenges": null,
+    "created": null
+  });
+
+  // Helper to update cache for all tabs when a challenge changes
+  const updateAllCaches = useCallback((updater: (challenges: Challenge[]) => Challenge[]) => {
+    setChallengesCache(prevCache => {
+      const newCache = { ...prevCache };
+      (Object.keys(newCache) as TabType[]).forEach(tab => {
+        if (newCache[tab]) {
+          newCache[tab] = updater(newCache[tab]!);
+        }
+      });
+      return newCache;
+    });
+    
+    // Also update current view
+    setChallenges(prev => updater(prev));
+  }, []);
 
   // Handle real-time challenge updates via WebSocket
   const handleChallengeUpdate = useCallback((challengeId: number, isActive: boolean, updatedChallenge: Challenge) => {
     console.log("WebSocket update received:", challengeId, isActive);
     
-    setChallenges(prevChallenges =>
-      prevChallenges.map(challenge => {
+    updateAllCaches(currentList => 
+      currentList.map(challenge => {
         if (challenge.id === challengeId) {
-          // Merge the updated challenge data
           return {
             ...challenge,
             ...updatedChallenge,
@@ -46,7 +71,7 @@ export default function ChallengeList({
         return challenge;
       })
     );
-  }, []);
+  }, [updateAllCaches]);
 
   // Connect to WebSocket for real-time updates
   const { isConnected } = useChallengeWebSocket({
@@ -55,7 +80,14 @@ export default function ChallengeList({
     onDisconnect: () => console.log("Disconnected from challenge updates"),
   });
 
-  const loadChallenges = async () => {
+  const loadChallenges = async (forceRefresh = false) => {
+    // If we have cached data and not forcing refresh, use it
+    if (!forceRefresh && challengesCache[currentTab]) {
+      setChallenges(challengesCache[currentTab]!);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -64,31 +96,29 @@ export default function ChallengeList({
       console.log("Loading challenges for tab:", currentTab);
       switch (currentTab) {
         case "my-challenges":
-          console.log("Fetching my challenges...");
           data = await getMyChallenges();
-          console.log("My challenges loaded:", data);
           break;
         case "created":
-          console.log("Fetching created challenges...");
           data = await getMyCreatedChallenges();
-          console.log("Created challenges loaded:", data);
           break;
         default:
-          console.log("Fetching all challenges...");
           data = await getAllChallenges();
-          console.log("All challenges loaded:", data);
           
           // Also fetch user's joined challenges to know which ones to hide Join button for
           try {
             const myJoinedChallenges = await getMyChallenges();
             const joinedIds = new Set(myJoinedChallenges.map(c => c.id));
             setJoinedChallengeIds(joinedIds);
-            console.log("User has joined challenge IDs:", Array.from(joinedIds));
           } catch (err) {
             console.error("Failed to fetch joined challenges:", err);
-            // Continue anyway, worst case user sees Join button for already joined challenges
           }
       }
+      
+      // Update cache and current view
+      setChallengesCache(prev => ({
+        ...prev,
+        [currentTab]: data
+      }));
       setChallenges(data);
     } catch (err: any) {
       console.error("Error loading challenges:", err);
@@ -106,8 +136,14 @@ export default function ChallengeList({
   const handleJoinChallenge = async (challengeId: number) => {
     try {
       await joinChallenge(challengeId);
-      // Reload challenges to reflect the change
-      await loadChallenges();
+      // Force reload to get fresh state including the new join
+      await loadChallenges(true);
+      
+      // Also invalidate other tabs since join status changed
+      setChallengesCache(prev => ({
+        ...prev,
+        "my-challenges": null // Will force refresh when visiting this tab
+      }));
     } catch (err: any) {
       alert(err.message || "Failed to join challenge");
     }
@@ -115,9 +151,9 @@ export default function ChallengeList({
 
   const handleToggleChallenge = async (challengeId: number) => {
     try {
-      // Optimistically update the UI first
-      setChallenges(prevChallenges =>
-        prevChallenges.map(challenge => {
+      // Optimistically update the UI and Cache first
+      updateAllCaches(currentList => 
+        currentList.map(challenge => {
           if (challenge.id === challengeId && challenge.toggle_details) {
             return {
               ...challenge,
@@ -136,8 +172,18 @@ export default function ChallengeList({
     } catch (err: any) {
       // On error, revert by reloading
       alert(err.message || "Failed to toggle challenge");
-      await loadChallenges();
+      await loadChallenges(true);
     }
+  };
+
+  const handleCardClick = (challenge: Challenge) => {
+    setSelectedChallenge(challenge);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => setSelectedChallenge(null), 300); // Clear after animation
   };
 
   return (
@@ -201,19 +247,19 @@ export default function ChallengeList({
       {/* Loading State */}
       {isLoading && (
         <div className="text-center py-12">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-slate-600 border-r-transparent"></div>
-          <p className="mt-4 text-slate-700 font-mono">Loading challenges...</p>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-white/20 border-r-white/80"></div>
+          <p className="mt-4 text-gray-400 font-mono">Loading challenges...</p>
         </div>
       )}
 
       {/* Error State - Glass Card */}
       {error && (
-        <div className="p-4 bg-red-100/60 backdrop-blur-sm border border-red-300/40 rounded-lg text-red-800 shadow-md">
+        <div className="p-4 bg-red-500/10 backdrop-blur-sm border border-red-500/20 rounded-lg text-red-400 shadow-md">
           <p className="font-medium font-mono">Error loading challenges</p>
           <p className="text-sm mt-1 font-mono">{error}</p>
           <button
-            onClick={loadChallenges}
-            className="mt-3 text-sm text-red-700 hover:text-red-800 underline font-mono"
+            onClick={() => loadChallenges(true)}
+            className="mt-3 text-sm text-red-400 hover:text-red-300 underline font-mono"
           >
             Try again
           </button>
@@ -222,16 +268,16 @@ export default function ChallengeList({
 
       {/* Empty State - Glass Card */}
       {!isLoading && !error && challenges.length === 0 && (
-        <div className="text-center py-12 bg-slate-100/30 backdrop-blur-sm rounded-xl border border-slate-300/20">
-          <div className="text-6xl mb-4">🎯</div>
-          <h3 className="text-xl font-semibold text-slate-900 mb-2 font-mono">
+        <div className="text-center py-16 bg-[#18181B]/40 backdrop-blur-sm rounded-xl border border-white/5">
+          <div className="text-6xl mb-6 opacity-50">🎯</div>
+          <h3 className="text-xl font-semibold text-white mb-2 font-mono">
             {currentTab === "created"
               ? "No challenges created yet"
               : currentTab === "my-challenges"
               ? "No challenges joined yet"
               : "No challenges available"}
           </h3>
-          <p className="text-slate-600 mb-6 font-mono text-sm">
+          <p className="text-gray-400 mb-8 font-mono text-sm max-w-md mx-auto">
             {currentTab === "created"
               ? "Create your first challenge to get started!"
               : currentTab === "my-challenges"
@@ -241,7 +287,7 @@ export default function ChallengeList({
           {onCreateClick && (
             <button
               onClick={onCreateClick}
-              className="px-6 py-3 bg-slate-700/50 backdrop-blur-sm hover:bg-slate-800/50 text-white font-medium font-mono rounded-lg transition-all duration-300 shadow-md border border-white/20"
+              className="px-6 py-3 bg-green-600/80 hover:bg-green-600 text-white font-medium font-mono rounded-lg transition-all duration-300 shadow-lg shadow-green-900/20 border border-white/10"
             >
               Create Challenge
             </button>
@@ -249,9 +295,9 @@ export default function ChallengeList({
         </div>
       )}
 
-      {/* Challenge Grid - Tighter spacing for Notion style */}
+      {/* Challenge Grid - Responsive Grid Layout */}
       {!isLoading && !error && challenges.length > 0 && (
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {challenges.map((challenge) => {
             const hasJoined = joinedChallengeIds.has(challenge.id);
             return (
@@ -264,12 +310,18 @@ export default function ChallengeList({
                     ? handleToggleChallenge 
                     : undefined
                 }
+                onClick={handleCardClick}
                 showActions={true}
               />
             );
           })}
         </div>
       )}
+      <ChallengeDetailModal
+        challenge={selectedChallenge}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }
