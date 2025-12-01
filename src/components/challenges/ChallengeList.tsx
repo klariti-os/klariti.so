@@ -8,6 +8,7 @@ import {
   joinChallenge,
   toggleChallengeStatus,
   Challenge,
+  ChallengeType,
 } from "@/services/challenges";
 import ChallengeCard from "./ChallengeCard";
 import ChallengeDetailModal from "./ChallengeDetailModal";
@@ -188,14 +189,29 @@ export default function ChallengeList({
 
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [showEnded, setShowEnded] = useState(false);
 
-  // Filter challenges based on search query
+  // Filter challenges based on search query and ended status
   const filteredChallenges = challenges.filter((challenge) => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = 
       challenge.name.toLowerCase().includes(query) ||
-      challenge.description?.toLowerCase().includes(query)
-    );
+      challenge.description?.toLowerCase().includes(query);
+    
+    if (!matchesSearch) return false;
+
+    // Filter out ended challenges unless showEnded is true
+    if (!showEnded) {
+      if (challenge.completed) return false;
+      
+      // For time-based challenges, check if end date has passed
+      if (challenge.challenge_type === ChallengeType.TIME_BASED && challenge.time_based_details) {
+        const endDate = new Date(challenge.time_based_details.end_date);
+        if (endDate < new Date()) return false;
+      }
+    }
+
+    return true;
   });
 
   return (
@@ -247,9 +263,21 @@ export default function ChallengeList({
           </button>
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+          {/* Show Ended Toggle */}
+          <button
+            onClick={() => setShowEnded(!showEnded)}
+            className={`px-3 py-2 rounded-lg font-medium font-mono text-sm transition-all duration-300 border ${
+              showEnded
+                ? "bg-slate-700/50 text-white border-white/20"
+                : "bg-[#18181B]/40 text-gray-400 border-white/10 hover:text-white"
+            }`}
+          >
+            {showEnded ? "Hide Ended" : "Show Ended"}
+          </button>
+
           {/* Search Input */}
-          <div className="relative flex-1 md:w-64">
+          <div className="relative flex-1 md:w-64 min-w-[200px]">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg
                 className="h-4 w-4 text-white/50"
