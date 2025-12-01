@@ -28,6 +28,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const checkAuth = async () => {
+    if (typeof window === "undefined") {
+      setIsLoading(false);
+      return;
+    }
+    
     const token = localStorage.getItem("access_token");
     if (token) {
       try {

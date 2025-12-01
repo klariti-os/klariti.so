@@ -6,6 +6,30 @@
 
 # Klariti OS
 
+## 🎯 NEW: Challenges Dashboard Feature
+
+**Now Live!** Full-featured productivity challenges management system integrated into the klariti.so dashboard.
+
+### Quick Links:
+- 📖 [Challenges Feature Guide](./CHALLENGES_FEATURE.md) - Complete user documentation
+- 🏗️ [Implementation Details](./CHALLENGES_IMPLEMENTATION.md) - Technical overview
+- 🚀 [Quick Start Guide](./CHALLENGES_QUICKSTART.md) - Setup & testing
+- 🔧 [Architecture Diagram](./CHALLENGES_ARCHITECTURE.md) - Component structure
+
+### What You Can Do:
+- ✅ **Create Challenges** - Time-based or toggle challenges with custom settings
+- ✅ **Browse Challenges** - Discover challenges from the community
+- ✅ **Join Challenges** - Participate in any challenge
+- ✅ **Track Progress** - View your challenge statistics
+- ✅ **Manage Challenges** - Update and toggle your created challenges
+- ✅ **Block Websites** - Configure distracting websites to block
+
+### Access:
+- 🌐 **Main Page**: `/challenges` - Dedicated challenges interface
+- 🎮 **Dashboard**: `/playground` - Integrated with other tools
+
+---
+
 ## [Manifesto] : Project anti zuckerberg
 
 
