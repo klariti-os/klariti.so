@@ -190,29 +190,46 @@ export default function ChallengeList({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showEnded, setShowEnded] = useState(false);
+  const [showUnindexed, setShowUnindexed] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
 
-  // Filter challenges based on search query and ended status
-  const filteredChallenges = challenges.filter((challenge) => {
-    const query = searchQuery.toLowerCase();
-    const matchesSearch = 
-      challenge.name.toLowerCase().includes(query) ||
-      challenge.description?.toLowerCase().includes(query);
-    
-    if (!matchesSearch) return false;
-
-    // Filter out ended challenges unless showEnded is true
-    if (!showEnded) {
-      if (challenge.completed) return false;
+  // Filter and sort challenges
+  const filteredChallenges = challenges
+    .filter((challenge) => {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        challenge.name.toLowerCase().includes(query) ||
+        challenge.description?.toLowerCase().includes(query);
       
-      // For time-based challenges, check if end date has passed
-      if (challenge.challenge_type === ChallengeType.TIME_BASED && challenge.time_based_details) {
-        const endDate = new Date(challenge.time_based_details.end_date);
-        if (endDate < new Date()) return false;
-      }
-    }
+      if (!matchesSearch) return false;
 
-    return true;
-  });
+      // Filter out ended challenges unless showEnded is true
+      if (!showEnded) {
+        if (challenge.completed) return false;
+        
+        // For time-based challenges, check if end date has passed
+        if (challenge.challenge_type === ChallengeType.TIME_BASED && challenge.time_based_details) {
+          const endDate = new Date(challenge.time_based_details.end_date);
+          if (endDate < new Date()) return false;
+        }
+      }
+
+      // Filter out unindexed challenges (no websites) unless showUnindexed is true
+      const hasWebsites = challenge.distracting_websites && challenge.distracting_websites.length > 0;
+      if (!showUnindexed && !hasWebsites) return false;
+
+      return true;
+    })
+    .sort((a, b) => {
+      // Sort unindexed challenges to the bottom
+      const aHasWebsites = a.distracting_websites && a.distracting_websites.length > 0;
+      const bHasWebsites = b.distracting_websites && b.distracting_websites.length > 0;
+
+      if (aHasWebsites && !bHasWebsites) return -1;
+      if (!aHasWebsites && bHasWebsites) return 1;
+      return 0;
+    });
 
   return (
     <div className="space-y-6">
@@ -230,51 +247,142 @@ export default function ChallengeList({
       {/* Controls Header: Tabs & Search */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Tabs */}
-        <div className="flex gap-2 flex-wrap">
+        {/* Left Side: Filters Dropdown */}
+        <div className="relative z-30">
           <button
-            onClick={() => setCurrentTab("all")}
-            className={`px-4 py-2 rounded-lg font-medium font-mono transition-all duration-300 ${
-              currentTab === "all"
-                ? "bg-slate-700/50 backdrop-blur-sm text-white shadow-md border border-white/20"
-                : "bg-slate-100/40 backdrop-blur-sm text-slate-700 hover:bg-slate-200/50 border border-slate-300/20"
-            }`}
-          >
-            All Challenges
-          </button>
-          <button
-            onClick={() => setCurrentTab("my-challenges")}
-            className={`px-4 py-2 rounded-lg font-medium font-mono transition-all duration-300 ${
-              currentTab === "my-challenges"
-                ? "bg-slate-700/50 backdrop-blur-sm text-white shadow-md border border-white/20"
-                : "bg-slate-100/40 backdrop-blur-sm text-slate-700 hover:bg-slate-200/50 border border-slate-300/20"
-            }`}
-          >
-            My Challenges
-          </button>
-          <button
-            onClick={() => setCurrentTab("created")}
-            className={`px-4 py-2 rounded-lg font-medium font-mono transition-all duration-300 ${
-              currentTab === "created"
-                ? "bg-slate-700/50 backdrop-blur-sm text-white shadow-md border border-white/20"
-                : "bg-slate-100/40 backdrop-blur-sm text-slate-700 hover:bg-slate-200/50 border border-slate-300/20"
-            }`}
-          >
-            Created by Me
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
-          {/* Show Ended Toggle */}
-          <button
-            onClick={() => setShowEnded(!showEnded)}
-            className={`px-3 py-2 rounded-lg font-medium font-mono text-sm transition-all duration-300 border ${
-              showEnded
-                ? "bg-slate-700/50 text-white border-white/20"
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium font-mono transition-all duration-300 border ${
+              isFilterOpen || showEnded || showUnindexed || currentTab !== "all"
+                ? "bg-slate-700/50 text-white border-white/20 shadow-md"
                 : "bg-[#18181B]/40 text-gray-400 border-white/10 hover:text-white"
             }`}
           >
-            {showEnded ? "Hide Ended" : "Show Ended"}
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-4 w-4" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span className="mr-1">
+              {currentTab === "all" && "All Challenges"}
+              {currentTab === "my-challenges" && "My Challenges"}
+              {currentTab === "created" && "Created by Me"}
+            </span>
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className={`h-4 w-4 transition-transform duration-200 ${isFilterOpen ? "rotate-180" : ""}`} 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
+
+          {isFilterOpen && (
+            <>
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setIsFilterOpen(false)}
+              ></div>
+              <div className="absolute left-0 mt-2 w-56 bg-[#18181B] border border-white/10 rounded-lg shadow-xl z-20 backdrop-blur-xl p-2 space-y-3">
+                {/* View Selection Section */}
+                <div className="space-y-1">
+                  <div className="px-3 py-1 text-xs font-mono text-gray-500 uppercase tracking-wider">View</div>
+                  <button
+                    onClick={() => {
+                      setCurrentTab("all");
+                      // Keep open to allow multiple selections if desired, or close
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md font-mono text-sm transition-colors flex items-center justify-between ${
+                      currentTab === "all" 
+                        ? "bg-green-600/20 text-green-400" 
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    All Challenges
+                    {currentTab === "all" && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCurrentTab("my-challenges");
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md font-mono text-sm transition-colors flex items-center justify-between ${
+                      currentTab === "my-challenges" 
+                        ? "bg-green-600/20 text-green-400" 
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    My Challenges
+                    {currentTab === "my-challenges" && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCurrentTab("created");
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md font-mono text-sm transition-colors flex items-center justify-between ${
+                      currentTab === "created" 
+                        ? "bg-green-600/20 text-green-400" 
+                        : "text-gray-300 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    Created by Me
+                    {currentTab === "created" && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                  </button>
+                </div>
+
+                <div className="h-px bg-white/10 mx-2"></div>
+
+                {/* Filters Section */}
+                <div className="space-y-1">
+                  <div className="px-3 py-1 text-xs font-mono text-gray-500 uppercase tracking-wider">Filters</div>
+                  <label className="flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-md cursor-pointer group">
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                      showEnded ? "bg-green-500 border-green-500" : "border-gray-500 group-hover:border-gray-400"
+                    }`}>
+                      {showEnded && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-sm text-gray-300 font-mono group-hover:text-white">Show Ended</span>
+                    <input 
+                      type="checkbox" 
+                      className="hidden" 
+                      checked={showEnded} 
+                      onChange={() => setShowEnded(!showEnded)} 
+                    />
+                  </label>
+
+                  <label className="flex items-center gap-3 px-3 py-2 hover:bg-white/5 rounded-md cursor-pointer group">
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                      showUnindexed ? "bg-green-500 border-green-500" : "border-gray-500 group-hover:border-gray-400"
+                    }`}>
+                      {showUnindexed && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-sm text-gray-300 font-mono group-hover:text-white">Show Unindexed</span>
+                    <input 
+                      type="checkbox" 
+                      className="hidden" 
+                      checked={showUnindexed} 
+                      onChange={() => setShowUnindexed(!showUnindexed)} 
+                    />
+                  </label>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+
 
           {/* Search Input */}
           <div className="relative flex-1 md:w-64 min-w-[200px]">
