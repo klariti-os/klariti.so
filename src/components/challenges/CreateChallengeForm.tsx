@@ -27,6 +27,8 @@ export default function CreateChallengeForm({
     distracting_websites: [],
   });
 
+  const [timeMode, setTimeMode] = useState<"duration" | "dates">("duration");
+  const [duration, setDuration] = useState({ days: 0, hours: 0, minutes: 30 });
   const [websites, setWebsites] = useState<{ url: string; name?: string }[]>(
     []
   );
@@ -45,11 +47,41 @@ export default function CreateChallengeForm({
         distracting_websites: websites.length > 0 ? websites : undefined,
       };
 
-      // Remove unnecessary fields based on challenge type
-      if (formData.challenge_type === ChallengeType.TOGGLE) {
+      // Handle Time Based logic
+      // Handle Time Based logic
+      if (formData.challenge_type === ChallengeType.TIME_BASED) {
+        if (timeMode === "duration") {
+          // Calculate dates based on duration from NOW
+          const now = new Date();
+          const end = new Date(now.getTime());
+          
+          // Add duration in milliseconds
+          const durationMs = 
+            (parseInt(duration.days.toString()) || 0) * 24 * 60 * 60 * 1000 +
+            (parseInt(duration.hours.toString()) || 0) * 60 * 60 * 1000 +
+            (parseInt(duration.minutes.toString()) || 0) * 60 * 1000;
+            
+          end.setTime(end.getTime() + durationMs);
+
+          dataToSubmit.start_date = now.toISOString();
+          dataToSubmit.end_date = end.toISOString();
+        } else {
+          // Custom Dates mode
+          // Convert local datetime-local strings to ISO UTC strings
+          if (formData.start_date) {
+            dataToSubmit.start_date = new Date(formData.start_date).toISOString();
+          }
+          if (formData.end_date) {
+            dataToSubmit.end_date = new Date(formData.end_date).toISOString();
+          }
+        }
+      } else if (formData.challenge_type === ChallengeType.TOGGLE) {
         delete dataToSubmit.start_date;
         delete dataToSubmit.end_date;
-      } else {
+      }
+
+      // Cleanup
+      if (formData.challenge_type !== ChallengeType.TOGGLE) {
         delete dataToSubmit.is_active;
       }
 
@@ -157,35 +189,104 @@ export default function CreateChallengeForm({
 
       {/* Time-Based Fields */}
       {formData.challenge_type === ChallengeType.TIME_BASED && (
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-800 mb-2 font-mono">
-              Start Date *
-            </label>
-            <input
-              type="datetime-local"
-              required
-              value={formData.start_date}
-              onChange={(e) =>
-                setFormData({ ...formData, start_date: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-slate-300/40 bg-white/50 backdrop-blur-sm rounded-lg focus:ring-2 focus:ring-slate-500/50 focus:border-transparent font-mono text-sm shadow-sm"
-            />
+        <div className="space-y-4 p-4 bg-slate-100/50 rounded-lg border border-slate-200">
+          {/* Mode Toggle */}
+          <div className="flex p-1 bg-slate-200/50 rounded-lg mb-4">
+            <button
+              type="button"
+              onClick={() => setTimeMode("duration")}
+              className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all font-mono ${
+                timeMode === "duration"
+                  ? "bg-white text-slate-800 shadow-sm"
+                  : "text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              Set Duration
+            </button>
+            <button
+              type="button"
+              onClick={() => setTimeMode("dates")}
+              className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all font-mono ${
+                timeMode === "dates"
+                  ? "bg-white text-slate-800 shadow-sm"
+                  : "text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              Custom Dates
+            </button>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-800 mb-2 font-mono">
-              End Date *
-            </label>
-            <input
-              type="datetime-local"
-              required
-              value={formData.end_date}
-              onChange={(e) =>
-                setFormData({ ...formData, end_date: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-slate-300/40 bg-white/50 backdrop-blur-sm rounded-lg focus:ring-2 focus:ring-slate-500/50 focus:border-transparent font-mono text-sm shadow-sm"
-            />
-          </div>
+
+          {timeMode === "duration" ? (
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1 font-mono">
+                  Days
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={duration.days}
+                  onChange={(e) => setDuration({ ...duration, days: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-slate-300/40 bg-white/50 rounded-lg focus:ring-2 focus:ring-slate-500/50 font-mono text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1 font-mono">
+                  Hours
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={duration.hours}
+                  onChange={(e) => setDuration({ ...duration, hours: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-slate-300/40 bg-white/50 rounded-lg focus:ring-2 focus:ring-slate-500/50 font-mono text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1 font-mono">
+                  Minutes
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={duration.minutes}
+                  onChange={(e) => setDuration({ ...duration, minutes: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-slate-300/40 bg-white/50 rounded-lg focus:ring-2 focus:ring-slate-500/50 font-mono text-sm"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-800 mb-2 font-mono">
+                  Start Date *
+                </label>
+                <input
+                  type="datetime-local"
+                  required={timeMode === "dates"}
+                  value={formData.start_date}
+                  onChange={(e) =>
+                    setFormData({ ...formData, start_date: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-slate-300/40 bg-white/50 backdrop-blur-sm rounded-lg focus:ring-2 focus:ring-slate-500/50 focus:border-transparent font-mono text-sm shadow-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-800 mb-2 font-mono">
+                  End Date *
+                </label>
+                <input
+                  type="datetime-local"
+                  required={timeMode === "dates"}
+                  value={formData.end_date}
+                  onChange={(e) =>
+                    setFormData({ ...formData, end_date: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-slate-300/40 bg-white/50 backdrop-blur-sm rounded-lg focus:ring-2 focus:ring-slate-500/50 focus:border-transparent font-mono text-sm shadow-sm"
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 

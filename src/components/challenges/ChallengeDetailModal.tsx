@@ -43,7 +43,9 @@ export default function ChallengeDetailModal({
   if (!isOpen || !challenge) return null;
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    // Ensure the date string is treated as UTC if it doesn't have timezone info
+    const utcString = dateString.endsWith("Z") ? dateString : `${dateString}Z`;
+    const date = new Date(utcString);
     return date.toLocaleDateString("en-US", {
       weekday: "short",
       month: "short",

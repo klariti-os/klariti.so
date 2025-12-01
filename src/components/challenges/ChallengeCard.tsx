@@ -25,7 +25,9 @@ export default function ChallengeCard({
   const isCreator = user?.id === challenge.creator_id;
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    // Ensure the date string is treated as UTC if it doesn't have timezone info
+    const utcString = dateString.endsWith("Z") ? dateString : `${dateString}Z`;
+    const date = new Date(utcString);
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -56,8 +58,11 @@ export default function ChallengeCard({
 
     if (challenge.challenge_type === ChallengeType.TIME_BASED && challenge.time_based_details) {
       const now = new Date();
-      const start = new Date(challenge.time_based_details.start_date);
-      const end = new Date(challenge.time_based_details.end_date);
+      // Ensure server dates are treated as UTC
+      const startString = challenge.time_based_details.start_date;
+      const endString = challenge.time_based_details.end_date;
+      const start = new Date(startString.endsWith("Z") ? startString : `${startString}Z`);
+      const end = new Date(endString.endsWith("Z") ? endString : `${endString}Z`);
 
       if (now < start) {
         return (
