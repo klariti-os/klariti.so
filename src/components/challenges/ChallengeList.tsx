@@ -120,7 +120,8 @@ export default function ChallengeList({
   const handleChallengeUpdate = useCallback((challengeId: number, isActive: boolean, updatedChallenge: Challenge) => {
     console.log("WebSocket update received:", challengeId, isActive);
     
-    updateAllCaches(currentList => 
+    // Update without re-sorting to prevent rearrangement
+    setChallenges(currentList => 
       currentList.map(challenge => {
         if (challenge.id === challengeId) {
           return {
@@ -132,17 +133,41 @@ export default function ChallengeList({
         return challenge;
       })
     );
-  }, [updateAllCaches]);
+    
+    // Update cache without re-sorting
+    setChallengesCache(prevCache => {
+      const newCache = { ...prevCache };
+      (Object.keys(newCache) as TabType[]).forEach(tab => {
+        if (newCache[tab]) {
+          const updatedData = newCache[tab]!.map(challenge => {
+            if (challenge.id === challengeId) {
+              return {
+                ...challenge,
+                ...updatedChallenge,
+                toggle_details: updatedChallenge.toggle_details || challenge.toggle_details,
+              };
+            }
+            return challenge;
+          });
+          newCache[tab] = updatedData;
+          localStorage.setItem(`challenges_cache_${tab}`, JSON.stringify(updatedData));
+        }
+      });
+      return newCache;
+    });
+  }, []);
 
   // Connect to WebSocket for real-time updates
   const { isConnected } = useChallengeWebSocket({
     onChallengeToggled: handleChallengeUpdate,
     onConnect: () => {
       console.log("Connected to challenge updates");
-      // Refresh data on connection to ensure sync across sessions
-      loadChallenges(true);
+      // Don't force refresh on connect - just update the connection state
+      // The handleChallengeUpdate will handle individual challenge updates
     },
-    onDisconnect: () => console.log("Disconnected from challenge updates"),
+    onDisconnect: () => {
+      console.log("Disconnected from challenge updates");
+    },
   });
 
   const loadChallenges = async (forceRefresh = false) => {
@@ -265,8 +290,8 @@ export default function ChallengeList({
 
   const handleToggleChallenge = async (challengeId: number) => {
     try {
-      // Optimistically update the UI and Cache first
-      updateAllCaches(currentList => 
+      // Optimistically update the UI without re-sorting
+      setChallenges(currentList => 
         currentList.map(challenge => {
           if (challenge.id === challengeId && challenge.toggle_details) {
             return {
@@ -280,6 +305,30 @@ export default function ChallengeList({
           return challenge;
         })
       );
+      
+      // Update cache without re-sorting
+      setChallengesCache(prevCache => {
+        const newCache = { ...prevCache };
+        (Object.keys(newCache) as TabType[]).forEach(tab => {
+          if (newCache[tab]) {
+            const updatedData = newCache[tab]!.map(challenge => {
+              if (challenge.id === challengeId && challenge.toggle_details) {
+                return {
+                  ...challenge,
+                  toggle_details: {
+                    ...challenge.toggle_details,
+                    is_active: !challenge.toggle_details.is_active,
+                  },
+                };
+              }
+              return challenge;
+            });
+            newCache[tab] = updatedData;
+            localStorage.setItem(`challenges_cache_${tab}`, JSON.stringify(updatedData));
+          }
+        });
+        return newCache;
+      });
 
       // Then make the API call
       await toggleChallengeStatus(challengeId);
@@ -345,15 +394,18 @@ export default function ChallengeList({
         }
       `}</style>
       {/* Connection Status Indicator */}
-      {isConnected && (
-        <div className="flex items-center gap-2 text-xs text-green-600 font-mono">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-          </span>
-          Live updates enabled
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        <span className="relative flex h-2 w-2">
+          {isConnected ? (
+            <>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </>
+          ) : (
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-gray-500"></span>
+          )}
+        </span>
+      </div>
 
     
 

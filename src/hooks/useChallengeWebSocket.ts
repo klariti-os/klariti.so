@@ -35,13 +35,24 @@ export function useChallengeWebSocket(options: UseChallengeWebSocketOptions = {}
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
-  const maxReconnectAttempts = 5;
-  const reconnectDelay = 3000; // 3 seconds
+  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isConnectedRef = useRef(false);
 
   const { onChallengeToggled, onError, onConnect, onDisconnect } = options;
 
-  const connect = useCallback(() => {
+  const connect = useCallback((retryCount = 0) => {
     try {
+      // Don't create a new connection if one already exists and is open
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        return;
+      }
+      
+      // Close existing connection if any
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+
       const wsUrl = getWebSocketUrl(API_BASE);
       console.log("Connecting to WebSocket:", wsUrl);
       
@@ -49,18 +60,25 @@ export function useChallengeWebSocket(options: UseChallengeWebSocketOptions = {}
 
       ws.onopen = () => {
         console.log("WebSocket connected successfully");
-        reconnectAttemptsRef.current = 0; // Reset reconnect attempts on successful connection
-        onConnect?.();
+        reconnectAttemptsRef.current = 0; // Reset reconnect attempts
+        isConnectedRef.current = true;
+        
+        // Only call onConnect if it's the initial connection, not a reconnect
+        if (retryCount === 0) {
+          onConnect?.();
+        }
+        
+        // Clear existing ping interval if any
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current);
+        }
         
         // Send periodic pings to keep connection alive
-        const pingInterval = setInterval(() => {
+        pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send("ping");
           }
         }, 30000); // Every 30 seconds
-
-        // Store interval ID to clear it later
-        (ws as any).pingInterval = pingInterval;
       };
 
       ws.onmessage = (event) => {
@@ -70,6 +88,7 @@ export function useChallengeWebSocket(options: UseChallengeWebSocketOptions = {}
 
           switch (data.type) {
             case "challenge_toggled":
+            case "challenge_updated":
               if (data.challenge_id !== undefined && data.is_active !== undefined && data.challenge) {
                 onChallengeToggled?.(data.challenge_id, data.is_active, data.challenge);
               }
@@ -87,42 +106,50 @@ export function useChallengeWebSocket(options: UseChallengeWebSocketOptions = {}
 
       ws.onerror = (error) => {
         console.error("WebSocket error:", error);
+        isConnectedRef.current = false;
         onError?.(error);
       };
 
       ws.onclose = () => {
         console.log("WebSocket disconnected");
+        isConnectedRef.current = false;
         
         // Clear ping interval
-        if ((ws as any).pingInterval) {
-          clearInterval((ws as any).pingInterval);
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current);
+          pingIntervalRef.current = null;
         }
         
         onDisconnect?.();
 
-        // Attempt to reconnect
-        if (reconnectAttemptsRef.current < maxReconnectAttempts) {
-          reconnectAttemptsRef.current++;
-          console.log(`Attempting to reconnect... (${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
-          
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
-          }, reconnectDelay);
-        } else {
-          console.error("Max reconnect attempts reached. Please refresh the page.");
+        // Clear existing reconnect timeout
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
         }
+
+        // Exponential backoff with jitter (like Chrome extension)
+        const baseDelay = Math.min(30000, Math.pow(2, retryCount) * 1000);
+        const jitter = Math.random() * 1000;
+        const delay = baseDelay + jitter;
+        
+        console.log(`Reconnecting in ${Math.round(delay)}ms...`);
+        
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connect(retryCount + 1);
+        }, delay);
       };
 
       wsRef.current = ws;
     } catch (err) {
       console.error("Error creating WebSocket connection:", err);
+      isConnectedRef.current = false;
     }
   }, [onChallengeToggled, onError, onConnect, onDisconnect]);
 
   useEffect(() => {
     // Only connect if in browser environment
     if (typeof window !== "undefined") {
-      connect();
+      connect(0);
     }
 
     return () => {
@@ -131,20 +158,21 @@ export function useChallengeWebSocket(options: UseChallengeWebSocketOptions = {}
         clearTimeout(reconnectTimeoutRef.current);
       }
       
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current);
+      }
+      
       if (wsRef.current) {
-        // Clear ping interval
-        if ((wsRef.current as any).pingInterval) {
-          clearInterval((wsRef.current as any).pingInterval);
-        }
-        
         wsRef.current.close();
         wsRef.current = null;
       }
+      
+      isConnectedRef.current = false;
     };
   }, [connect]);
 
   return {
-    isConnected: wsRef.current?.readyState === WebSocket.OPEN,
+    isConnected: isConnectedRef.current && wsRef.current?.readyState === WebSocket.OPEN,
     reconnectAttempts: reconnectAttemptsRef.current,
   };
 }
