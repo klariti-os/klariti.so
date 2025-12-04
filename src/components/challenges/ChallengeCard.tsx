@@ -25,7 +25,9 @@ export default function ChallengeCard({
   const isCreator = user?.id === challenge.creator_id;
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    // Ensure the date string is treated as UTC if it doesn't have timezone info
+    const utcString = dateString.endsWith("Z") ? dateString : `${dateString}Z`;
+    const date = new Date(utcString);
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -56,8 +58,11 @@ export default function ChallengeCard({
 
     if (challenge.challenge_type === ChallengeType.TIME_BASED && challenge.time_based_details) {
       const now = new Date();
-      const start = new Date(challenge.time_based_details.start_date);
-      const end = new Date(challenge.time_based_details.end_date);
+      // Ensure server dates are treated as UTC
+      const startString = challenge.time_based_details.start_date;
+      const endString = challenge.time_based_details.end_date;
+      const start = new Date(startString.endsWith("Z") ? startString : `${startString}Z`);
+      const end = new Date(endString.endsWith("Z") ? endString : `${endString}Z`);
 
       if (now < start) {
         return (
@@ -167,10 +172,30 @@ export default function ChallengeCard({
           </span>
         )}
 
+        {/* Participants */}
+        {challenge.participants && challenge.participants.length > 0 && (
+          <div className="flex -space-x-2">
+            {challenge.participants.slice(0, 3).map((participant) => (
+              <div
+                key={participant.id}
+                className="h-6 w-6 rounded-full bg-zinc-700 border border-white/10 flex items-center justify-center text-[10px] font-medium text-white"
+                title={participant.username}
+              >
+                {participant.username.charAt(0).toUpperCase()}
+              </div>
+            ))}
+            {challenge.participants.length > 3 && (
+              <div className="h-6 w-6 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-[10px] font-medium text-zinc-400">
+                +{challenge.participants.length - 3}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Website Count */}
-        {challenge.distracting_websites && challenge.distracting_websites.length > 0 && (
+        {challenge.distractions && challenge.distractions.length > 0 && (
           <span className="flex items-center gap-1.5 text-xs text-zinc-500 font-mono ml-auto">
-            {challenge.distracting_websites.length} sites
+            {challenge.distractions.length} sites
           </span>
         )}
       </div>
