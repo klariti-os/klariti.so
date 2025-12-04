@@ -127,7 +127,6 @@ export default function ChallengeCard({
                     key={participant.id}
                     user={participant}
                     size="sm"
-                    showPopover={true}
                   />
                 ))}
                 {challenge.participants.length > 4 && (
