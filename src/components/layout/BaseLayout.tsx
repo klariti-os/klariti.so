@@ -5,7 +5,7 @@ const BaseLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="relative flex flex-col justify-center min-h-screen pt-20">
       <div
-        className="absolute inset-0 bg-no-repeat bg-center opacity-60 bg-fixed"
+        className="absolute inset-0 bg-no-repeat bg-center bg-fixed"
         style={{
           backgroundImage: `url(/images/pc-land2.png)`,
           backgroundSize: "2000px 2000px",
