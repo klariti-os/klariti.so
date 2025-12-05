@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Kline from "@/components/kline";
 
+import { IS_PRODUCTION } from "@/config/constants";
+
 export default function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [username, setUsername] = useState("");
@@ -14,6 +16,13 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { user, login, register, isLoading: authLoading } = useAuth();
+
+  // Redirect if in production
+  useEffect(() => {
+    if (IS_PRODUCTION) {
+      router.push("/join");
+    }
+  }, [router]);
 
   // Redirect if already logged in
   useEffect(() => {
