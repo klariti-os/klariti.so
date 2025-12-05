@@ -8,6 +8,7 @@ import { Card } from "@/components/Card";
 import PillButton from "@/components/PillButton";
 import Kline from "@/components/kline";
 import Footer from "@/components/layout/Footer";
+import { FeatureCard } from "@/components/FeatureCard";
 
 export const metadata: Metadata = {
   title: "Klariti OS",
@@ -70,9 +71,9 @@ const HomePage: NextPage = () => {
 
             <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-center pt-32 pb-32">
             <div className="mb-8 animate-fade-in-up">
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-100 font-sans mb-4">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-pp-editorial tracking-tight text-gray-100 mb-4">
                 The new standard <br />
-                <span className="font-serif italic font-light">in digital wellness</span>
+                <span className="italic font-light">in digital wellness</span>
                 </h1>
             </div>
 
@@ -90,11 +91,11 @@ const HomePage: NextPage = () => {
                 Get started
                 </PillButton>
                 <PillButton
-                href="/manifesto"
-                className="bg-white/50 backdrop-blur-sm text-gray-900 hover:bg-white/80 px-8 py-3 text-lg font-medium rounded-full transition-all duration-300 border border-gray-200/50"
-                >
-                Read manifesto
-                </PillButton>
+              href="/manifesto"
+              className="bg-white/50 backdrop-blur-sm text-gray-900 hover:bg-white/80 px-8 py-3 text-lg font-medium rounded-full transition-all duration-300 border border-gray-200/50 font-pp-editorial"
+            >
+              Read manifesto
+            </PillButton>
             </div>
             </div>
         </div>
@@ -142,52 +143,41 @@ const HomePage: NextPage = () => {
             </section>
 
             {/* Features Section */}
-            <section className="py-24  bg-white/50 ">
+            <section className="py-24 bg-[#fdfbf7]">
                 <div className="max-w-5xl mx-auto px-6">
-                    <div className="mb-16 text-center">
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900  mb-4">Designed to reclaim your attention.</h2>
+                    <div className="mb-20 text-left">
+                        <h2 className="text-4xl md:text-5xl font-pp-editorial text-gray-900 mb-6 tracking-tight">Designed to convert. Built to scale.</h2>
                         <p className="text-lg text-gray-600 dark:text-gray-400">Built to scale with your digital habits.</p>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                        {/* Feature 1 */}
-                        <div className="group p-6 rounded-2xl hover:bg-white hover:shadow-xl transition-all duration-300 dark:hover:bg-zinc-800">
-                            <div className="w-12 h-12 bg-gray-100 dark:bg-zinc-700 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                                <svg className="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        <FeatureCard
+                            title="Drive revenue"
+                            description="Klariti's platform is built to help enterprises grow. Optimised to eliminate friction and instantly deliver higher conversion."
+                            icon={
+                                <svg className="w-8 h-8 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                 </svg>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900  mb-3">Deep Work</h3>
-                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
-                                Eliminate distractions and enter a flow state effortlessly. Our tools block interruptions so you can focus on what matters.
-                            </p>
-                        </div>
-
-                        {/* Feature 2 */}
-                        <div className="group p-6 rounded-2xl hover:bg-white hover:shadow-xl transition-all duration-300 dark:hover:bg-zinc-800">
-                            <div className="w-12 h-12 bg-gray-100 dark:bg-zinc-700 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                                <svg className="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            }
+                        />
+                        <FeatureCard
+                            title="Future-proof compliance"
+                            description="A powerful policy engine translates compliance into code — enabling the industry's most detailed audit trails."
+                            icon={
+                                <svg className="w-8 h-8 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900  mb-3">Privacy First</h3>
-                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
-                                Your data stays yours. We believe in transparency and security, ensuring your digital footprint remains under your control.
-                            </p>
-                        </div>
-
-                        {/* Feature 3 */}
-                        <div className="group p-6 rounded-2xl hover:bg-white hover:shadow-xl transition-all duration-300 dark:hover:bg-zinc-800">
-                            <div className="w-12 h-12 bg-gray-100 dark:bg-zinc-700 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                                <svg className="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            }
+                        />
+                        <FeatureCard
+                            title="Reduce costs"
+                            description="Eliminate manual checks, endless emails and lengthy reviews — by automating analyst tasks and compliance workflows."
+                            icon={
+                                <svg className="w-8 h-8 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900  mb-3">Habit Building</h3>
-                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
-                                Track your progress and build lasting habits. Visual insights help you understand your usage patterns and improve over time.
-                            </p>
-                        </div>
+                            }
+                        />
                     </div>
                 </div>
             </section>
