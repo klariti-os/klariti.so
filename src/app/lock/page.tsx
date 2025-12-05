@@ -77,8 +77,8 @@ export default function LockPage() {
             Klariti mode has been activated
           </h1>
           <p className="font-pp-editorial-regular text-xl md:text-2xl">
-            Go reKlaim your time
-          </p>
+            Go touch grass!
+          </p>  
         </div>
 
         <div className="pt-8 mt-8">
