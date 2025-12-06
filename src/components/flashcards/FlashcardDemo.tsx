@@ -127,10 +127,10 @@ export default function FlashcardDemo() {
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
-          AI Flashcards
+          Klariti Flashcards
         </h1>
         <p className="text-zinc-400">
-          Generate interactive quizzes from any text instantly.
+          Quiz yourself on some class topics rather than being distracted
         </p>
       </div>
 
@@ -140,7 +140,7 @@ export default function FlashcardDemo() {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Source Text
+                Add something you would like to be quizzed on
               </label>
               <textarea
                 value={text}
@@ -174,7 +174,7 @@ export default function FlashcardDemo() {
                       onClick={() => setNQuestions(n)}
                       className={`flex-1 py-3 rounded-xl border font-medium transition-all ${
                         nQuestions === n
-                          ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20"
+                          ? "bg-green-600 border-green-500 text-white shadow-lg shadow-green-500/20"
                           : "bg-black/20 border-white/10 text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
                       }`}
                     >
